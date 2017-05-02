@@ -1,6 +1,6 @@
-/* 
+/*
  * mjpeg-proxy -- Republish a MJPEG HTTP image stream using a server in Go
- * 
+ *
  * Copyright (C) 2015, Valentin Vidic
  *
  * This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@ import "errors"
    Cache-Control: no-store
    Pragma: no-cache
    Content-Language: en
-  
+
    --myboundary
    Content-Type: image/jpeg
    Content-Length: 36291
@@ -102,11 +102,12 @@ func readChunkHeader(reader *bufio.Reader, boundary string) (head []byte, size i
 	if err != nil {
 		return
 	}
-	if bl := strings.TrimRight(string(line), "\r\n"); bl != boundary {
-		err_str := fmt.Sprintf("Invalid boundary received (%s)", bl) 
-		err = errors.New(err_str)
-		return
-	}
+
+	// if bl := strings.TrimRight(string(line), "\r\n"); bl != boundary {
+	// 	err_str := fmt.Sprintf("Invalid boundary received (%s)", bl)
+	// 	err = errors.New(err_str)
+	// 	return
+	// }
 	head = append(head, line...)
 
 	// read header
@@ -163,7 +164,7 @@ func readChunkData(reader *bufio.Reader, size int) (buf []byte, err error) {
 
 func getBoundary(resp http.Response) (string, error) {
 	ct := resp.Header.Get("Content-Type")
-	prefix := "multipart/x-mixed-replace;boundary="
+	prefix := "multipart/x-mixed-replace; boundary="
 	if !strings.HasPrefix(ct, prefix) {
 		err_str := fmt.Sprintf("Content-Type is invalid (%s)", ct)
 		return "", errors.New(err_str)
@@ -414,6 +415,9 @@ func main() {
 
 	// start web server
 	http.HandleFunc(*urlPtr, makeHandler(pubsub))
+  http.Handle("/", http.FileServer(http.Dir("resources")))
+
+
 	err := http.ListenAndServe(*bindPtr, nil)
 	if err != nil {
 		fmt.Printf("Failed to start server: %s\n", err)
